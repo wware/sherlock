@@ -35,6 +35,8 @@ def main(
 
     with out.open("w", encoding="utf-8") as f:
         for chunk in chunks:
+            chunk_sentence_ids = [sid for sid in chunk["sentence_ids"] if sid in sentences]
+            sentence_text_by_id = {sid: sentences[sid]["text"] for sid in chunk_sentence_ids}
             body = "\n".join(
                 f"[sent {sid}] {sentences[sid]['text']}" for sid in chunk["sentence_ids"] if sid in sentences
             )
@@ -50,6 +52,18 @@ def main(
                 for entity in result.get("entities", []):
                     if entity.get("type") not in ENTITY_TYPES:
                         continue
+                    surface_form = str(entity.get("surface_form", "")).strip()
+                    if not surface_form:
+                        continue
+                    sentence_id = entity.get("sentence_id")
+                    if sentence_id not in sentence_text_by_id:
+                        # Recover sentence assignment from chunk context.
+                        lower_surface = surface_form.lower()
+                        matching_sid = next(
+                            (sid for sid, text in sentence_text_by_id.items() if lower_surface in text.lower()),
+                            chunk_sentence_ids[0] if chunk_sentence_ids else None,
+                        )
+                        entity["sentence_id"] = matching_sid
                     entity["chunk_id"] = chunk["id"]
                     f.write(json.dumps(entity) + "\n")
             except Exception as exc:

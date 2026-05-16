@@ -56,11 +56,80 @@ ENTITY_META = {
     "object:letter": {"name": "The letter", "type": "Object", "wiki": None},
 }
 
+TYPE_PREFIX = {
+    "person": "person",
+    "location": "location",
+    "object": "object",
+    "document": "document",
+    "moment": "moment",
+    "event": "event",
+    "disguise": "disguise",
+    "plan": "plan",
+}
+
+GENERIC_SURFACES = {
+    "",
+    "he",
+    "she",
+    "him",
+    "her",
+    "his",
+    "hers",
+    "they",
+    "them",
+    "their",
+    "it",
+    "its",
+    "someone",
+    "somebody",
+    "something",
+    "man",
+    "woman",
+    "gentleman",
+    "lady",
+}
+
 
 def normalize_surface(text: str) -> str:
     normalized = text.strip().lower()
     normalized = re.sub(r"^[\"'\(\[]+|[\"'\),.;:!?\]]+$", "", normalized)
     return normalized
+
+
+def slugify(text: str) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+    slug = re.sub(r"_+", "_", slug)
+    return slug
+
+
+def resolve_canonical_id(mention: dict) -> str | None:
+    surface_form = mention.get("surface_form", "")
+    key = normalize_surface(surface_form)
+    if key in IDENTITY_MAP:
+        return IDENTITY_MAP[key]
+
+    # Try matching without common honorifics/articles.
+    simplified = re.sub(r"^(mr|mrs|ms|dr|miss|sir|lady)\.?\s+", "", key)
+    simplified = re.sub(r"^the\s+", "", simplified)
+    if simplified in IDENTITY_MAP:
+        return IDENTITY_MAP[simplified]
+
+    if key in GENERIC_SURFACES:
+        return None
+
+    mention_type = str(mention.get("type", "")).strip().lower()
+    prefix = TYPE_PREFIX.get(mention_type)
+    if not prefix:
+        return None
+
+    if len(key) < 3:
+        return None
+
+    slug = slugify(simplified if simplified else key)
+    if not slug or slug in GENERIC_SURFACES:
+        return None
+
+    return f"{prefix}:{slug}"
 
 
 def main(
@@ -73,14 +142,15 @@ def main(
     resolved = []
     unresolved = []
     seen_entities = set()
+    display_names: dict[str, Counter] = {}
 
     for mention in mentions:
-        key = normalize_surface(mention.get("surface_form", ""))
-        canonical_id = IDENTITY_MAP.get(key)
+        canonical_id = resolve_canonical_id(mention)
         mention["canonical_id"] = canonical_id
         if canonical_id:
             resolved.append(mention)
             seen_entities.add(canonical_id)
+            display_names.setdefault(canonical_id, Counter())[mention.get("surface_form", "").strip()] += 1
         else:
             unresolved.append(mention)
 
@@ -90,7 +160,10 @@ def main(
 
     with pathlib.Path(entities_out).open("w", encoding="utf-8") as f:
         for entity_id in sorted(seen_entities):
-            meta = ENTITY_META.get(entity_id, {"name": entity_id, "type": "Unknown", "wiki": None})
+            fallback_name = display_names.get(entity_id, Counter()).most_common(1)
+            inferred_name = fallback_name[0][0] if fallback_name else entity_id
+            inferred_type = entity_id.split(":", 1)[0].capitalize() if ":" in entity_id else "Unknown"
+            meta = ENTITY_META.get(entity_id, {"name": inferred_name, "type": inferred_type, "wiki": None})
             f.write(json.dumps({"id": entity_id, **meta}) + "\n")
 
     print(f"Resolved:   {len(resolved)} mentions → {len(seen_entities)} entities")

@@ -31,7 +31,7 @@ def main(
     chunks = {c["id"]: c for c in (json.loads(l) for l in pathlib.Path(chunks_file).read_text(encoding="utf-8").splitlines() if l.strip())}
     sentences = {s["id"]: s for s in (json.loads(l) for l in pathlib.Path(sentences_file).read_text(encoding="utf-8").splitlines() if l.strip())}
     entities = [json.loads(l) for l in pathlib.Path(entities_file).read_text(encoding="utf-8").splitlines() if l.strip()]
-    entity_list = "\n".join(f"  {entity['id']} — {entity['name']} ({entity['type']})" for entity in entities)
+    entity_by_id = {entity["id"]: entity for entity in entities if "id" in entity}
 
     mentions_by_chunk = collections.defaultdict(list)
     for mention in (json.loads(l) for l in pathlib.Path(mentions_file).read_text(encoding="utf-8").splitlines() if l.strip()):
@@ -46,10 +46,24 @@ def main(
             if len(chunk_entities) < 2:
                 continue
 
+            chunk_entity_rows = []
+            for entity_id in sorted(chunk_entities):
+                entity = entity_by_id.get(entity_id)
+                if entity:
+                    chunk_entity_rows.append(f"  {entity['id']} — {entity.get('name', entity_id)} ({entity.get('type', 'Unknown')})")
+                else:
+                    chunk_entity_rows.append(f"  {entity_id}")
+            chunk_entity_list = "\n".join(chunk_entity_rows)
+
             body = "\n".join(
                 f"[sent {sid}] {sentences[sid]['text']}" for sid in chunk["sentence_ids"] if sid in sentences
             )
-            user_msg = f"Entities present in this passage:\n{entity_list}\n\nPassage:\n{body}"
+            user_msg = (
+                "Use only these entity IDs and only permitted predicates from the system prompt.\n"
+                "If no valid relationship is supported by the passage, return an empty array.\n\n"
+                f"Entities present in this passage:\n{chunk_entity_list}\n\n"
+                f"Passage:\n{body}"
+            )
 
             resp = client.messages.create(
                 model="claude-sonnet-4-20250514",
