@@ -30,6 +30,7 @@ KNOWN_PREDICATES = {
     "married_to",
     "employed_by",
 }
+EPISTEMIC_STATUSES = {"ground_truth", "believed", "false_belief", "inferred"}
 
 
 if BaseModel:
@@ -82,7 +83,7 @@ else:
                 raise ValueError(f"ID must have a type prefix, got {object_id!r}")
             if predicate not in KNOWN_PREDICATES:
                 raise ValueError(f"Unknown predicate {predicate!r}")
-            if epistemic_status not in {"ground_truth", "believed", "false_belief", "inferred"}:
+            if epistemic_status not in EPISTEMIC_STATUSES:
                 raise ValueError(f"Unknown epistemic_status {epistemic_status!r}")
             self.subject_id = subject_id.strip()
             self.predicate = predicate
