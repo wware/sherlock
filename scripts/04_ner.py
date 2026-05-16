@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stage 5: LLM NER pass.
+Overview stage 5 (script 04): LLM NER pass.
 Input:  chunks.jsonl, sentences.jsonl
 Output: raw_mentions.jsonl
 

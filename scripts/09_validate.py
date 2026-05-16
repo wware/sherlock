@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stage 10: relationship validator.
+Overview stage 10 (script 09): relationship validator.
 Input:  candidates.jsonl
 Output: relationships.jsonl  (valid triples)
         rejected.jsonl       (domain/range failures; appended to any parser rejects)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stage 9: relationship parser.
+Overview stage 9 (script 08): relationship parser.
 Input:  raw_relationships.jsonl
 Output: candidates.jsonl   (parseable candidates)
         rejected.jsonl     (parse failures, with failure_reason)

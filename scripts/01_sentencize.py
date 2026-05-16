@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stage 1+2: sentence boundary detection + numbering.
+Overview stages 2+3 (script 01): sentence boundary detection + numbering.
 Input:  sib.txt
 Output: sentences.jsonl  (id, text, char_start, char_end, hash)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Stage 7: identity server.
+Overview stage 7 (script 06): identity server.
 Input:  mentions.jsonl
 Output: mentions_resolved.jsonl  (mentions with canonical_id added)
         entities.jsonl           (one record per canonical entity)
