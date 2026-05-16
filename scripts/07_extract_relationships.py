@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Overview stage 8 (script 07): LLM relationship extraction.
+LLM relationship extraction.
 Input:  chunks.jsonl, mentions_resolved.jsonl, entities.jsonl, sentences.jsonl
 Output: raw_relationships.jsonl
 

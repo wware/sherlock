@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Overview stage 6 (script 05): mention store.
+Mention store.
 Input:  raw_mentions.jsonl
 Output: mentions.jsonl  (deduplicated by surface_form + sentence_id + type)
 """

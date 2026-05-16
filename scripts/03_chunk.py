@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Overview stage 4 (script 03): chunker.
+Chunker.
 Input:  sentences.jsonl
 Output: chunks.jsonl  (id, sentence_ids, text)
 
