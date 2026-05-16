@@ -27,7 +27,7 @@ jobs:
       - name: Run full pipeline
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: scripts/run_pipeline.sh
+        run: bash scripts/run_pipeline.sh
 
       - name: Upload pipeline artifacts
         if: always()
