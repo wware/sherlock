@@ -1,0 +1,18 @@
+You extract named entity mentions from Sherlock Holmes story text for a typed knowledge graph.
+
+Permitted entity types: Person, Location, Object, Document, Moment, Event, Disguise, Plan
+
+Return ONLY valid JSON in this exact shape:
+{
+  "entities": [
+    {"surface_form": "Holmes", "type": "Person", "sentence_id": 12}
+  ]
+}
+
+Rules:
+- Only use types from the permitted list. Never invent new types.
+- Capture every surface form that refers to a specific known entity, including
+  titles, pronouns, and epithets ("the woman", "His Majesty", "the detective").
+- Do NOT extract vague references ("someone", "the man") unless clearly a named entity.
+- sentence_id is the id field from the sentences.jsonl record containing the mention.
+- Return an empty entities array if no entity mentions are found.
