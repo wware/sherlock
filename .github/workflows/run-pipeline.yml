@@ -1,0 +1,50 @@
+name: Run Sherlock Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    environment: RunEnv
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip anthropic
+
+      - name: Ensure scripts are executable
+        run: chmod +x scripts/*.sh
+
+      - name: Run full pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: scripts/run_pipeline.sh
+
+      - name: Upload pipeline artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sherlock-pipeline-${{ github.run_number }}
+          if-no-files-found: warn
+          path: |
+            /home/runner/work/sherlock/sherlock/sib.txt
+            /home/runner/work/sherlock/sherlock/sentences.jsonl
+            /home/runner/work/sherlock/sherlock/chunks.jsonl
+            /home/runner/work/sherlock/sherlock/raw_mentions.jsonl
+            /home/runner/work/sherlock/sherlock/mentions.jsonl
+            /home/runner/work/sherlock/sherlock/mentions_resolved.jsonl
+            /home/runner/work/sherlock/sherlock/entities.jsonl
+            /home/runner/work/sherlock/sherlock/raw_relationships.jsonl
+            /home/runner/work/sherlock/sherlock/candidates.jsonl
+            /home/runner/work/sherlock/sherlock/relationships.jsonl
+            /home/runner/work/sherlock/sherlock/rejected.jsonl
