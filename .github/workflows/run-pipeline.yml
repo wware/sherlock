@@ -10,6 +10,8 @@ jobs:
   run-pipeline:
     runs-on: ubuntu-latest
     environment: RunEnv
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,14 +39,14 @@ jobs:
           name: sherlock-pipeline-${{ github.run_number }}
           if-no-files-found: warn
           path: |
-            /home/runner/work/sherlock/sherlock/sib.txt
-            /home/runner/work/sherlock/sherlock/sentences.jsonl
-            /home/runner/work/sherlock/sherlock/chunks.jsonl
-            /home/runner/work/sherlock/sherlock/raw_mentions.jsonl
-            /home/runner/work/sherlock/sherlock/mentions.jsonl
-            /home/runner/work/sherlock/sherlock/mentions_resolved.jsonl
-            /home/runner/work/sherlock/sherlock/entities.jsonl
-            /home/runner/work/sherlock/sherlock/raw_relationships.jsonl
-            /home/runner/work/sherlock/sherlock/candidates.jsonl
-            /home/runner/work/sherlock/sherlock/relationships.jsonl
-            /home/runner/work/sherlock/sherlock/rejected.jsonl
+            sib.txt
+            sentences.jsonl
+            chunks.jsonl
+            raw_mentions.jsonl
+            mentions.jsonl
+            mentions_resolved.jsonl
+            entities.jsonl
+            raw_relationships.jsonl
+            candidates.jsonl
+            relationships.jsonl
+            rejected.jsonl
