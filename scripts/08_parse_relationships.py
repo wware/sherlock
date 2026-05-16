@@ -31,11 +31,11 @@ KNOWN_PREDICATES = {
     "employed_by",
 }
 EPISTEMIC_STATUSES = {"ground_truth", "believed", "false_belief", "inferred"}
+# Defensive normalization for common LLM output variants, even though prompts require canonical predicates.
 PREDICATE_ALIASES = {
     "located_in": "located_at",
     "in_location": "located_at",
     "is_at": "located_at",
-    "at": "located_at",
     "knows": "knows_at",
     "acquainted_with": "knows_at",
     "has": "possesses",
@@ -46,8 +46,6 @@ PREDICATE_ALIASES = {
     "wrote": "authored",
     "sent": "authored",
     "inside": "contains",
-    "married": "married_to",
-    "spouse_of": "married_to",
     "works_for": "employed_by",
     "employed_at": "employed_by",
 }

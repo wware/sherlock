@@ -59,7 +59,7 @@ def main(
                 f"[sent {sid}] {sentences[sid]['text']}" for sid in chunk["sentence_ids"] if sid in sentences
             )
             user_msg = (
-                "Use only these entity IDs and only permitted predicates from the system prompt.\n"
+                "Use only the entity IDs listed below and the permitted predicates from the system prompt.\n"
                 "If no valid relationship is supported by the passage, return an empty array.\n\n"
                 f"Entities present in this passage:\n{chunk_entity_list}\n\n"
                 f"Passage:\n{body}"

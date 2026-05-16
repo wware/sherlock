@@ -66,6 +66,7 @@ TYPE_PREFIX = {
     "disguise": "disguise",
     "plan": "plan",
 }
+MIN_SURFACE_LENGTH = 3
 
 GENERIC_SURFACES = {
     "",
@@ -87,6 +88,34 @@ GENERIC_SURFACES = {
     "woman",
     "gentleman",
     "lady",
+    "the man",
+    "the woman",
+    "the gentleman",
+    "the lady",
+}
+GENERIC_SLUGS = {
+    "he",
+    "she",
+    "him",
+    "her",
+    "his",
+    "hers",
+    "they",
+    "them",
+    "their",
+    "it",
+    "its",
+    "someone",
+    "somebody",
+    "something",
+    "man",
+    "woman",
+    "gentleman",
+    "lady",
+    "the_man",
+    "the_woman",
+    "the_gentleman",
+    "the_lady",
 }
 
 
@@ -122,11 +151,11 @@ def resolve_canonical_id(mention: dict) -> str | None:
     if not prefix:
         return None
 
-    if len(key) < 3:
+    if len(key) < MIN_SURFACE_LENGTH:
         return None
 
-    slug = slugify(simplified if simplified else key)
-    if not slug or slug in GENERIC_SURFACES:
+    slug = slugify(simplified or key)
+    if not slug or slug in GENERIC_SLUGS:
         return None
 
     return f"{prefix}:{slug}"
@@ -160,9 +189,10 @@ def main(
 
     with pathlib.Path(entities_out).open("w", encoding="utf-8") as f:
         for entity_id in sorted(seen_entities):
-            fallback_name = display_names.get(entity_id, Counter()).most_common(1)
-            inferred_name = fallback_name[0][0] if fallback_name else entity_id
-            inferred_type = entity_id.split(":", 1)[0].capitalize() if ":" in entity_id else "Unknown"
+            name_candidates = display_names.get(entity_id, Counter()).most_common(1)
+            inferred_name = name_candidates[0][0] if name_candidates else entity_id
+            inferred_prefix = entity_id.split(":", 1)[0] if ":" in entity_id else ""
+            inferred_type = inferred_prefix.capitalize() if inferred_prefix in TYPE_PREFIX else "Unknown"
             meta = ENTITY_META.get(entity_id, {"name": inferred_name, "type": inferred_type, "wiki": None})
             f.write(json.dumps({"id": entity_id, **meta}) + "\n")
 

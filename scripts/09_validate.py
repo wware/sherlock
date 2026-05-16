@@ -53,7 +53,7 @@ def load_jsonl(path: pathlib.Path) -> list[dict]:
 
 def rejection_category(reason: str) -> str:
     lowered = reason.lower()
-    if "unknown predicate" in lowered or "predicate" in lowered:
+    if "unknown predicate" in lowered or "not in schema" in lowered:
         return "predicate_mismatch"
     if "id must have a type prefix" in lowered:
         return "id_format"
@@ -121,9 +121,15 @@ def main(
     print(f"  relationships.jsonl:     {len(valid)}")
     print(f"  rejected.jsonl:          {total_rejected}")
 
-    if chunks and raw_relationships:
-        raw_per_chunk = Counter(rel.get("chunk_id") for rel in raw_relationships if rel.get("chunk_id") is not None)
-        avg = len(raw_relationships) / len(chunks)
+    if raw_relationships and len(chunks) > 0:
+        raw_per_chunk = Counter()
+        raw_total = 0
+        for rel in raw_relationships:
+            raw_total += 1
+            chunk_id = rel.get("chunk_id")
+            if chunk_id is not None:
+                raw_per_chunk[chunk_id] += 1
+        avg = raw_total / len(chunks)
         print(f"\nRaw relationships per chunk: avg {avg:.2f} across {len(chunks)} chunks")
         if raw_per_chunk:
             print("Top chunks by raw relationship count:")
