@@ -22,10 +22,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip anthropic
-
-      - name: Ensure scripts are executable
-        run: chmod +x scripts/*.sh
+        run: python -m pip install --upgrade pip "anthropic>=0.18.0,<1.0.0"
 
       - name: Run full pipeline
         env:
