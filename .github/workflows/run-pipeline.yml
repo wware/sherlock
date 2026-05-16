@@ -39,14 +39,5 @@ jobs:
           name: sherlock-pipeline-${{ github.run_number }}
           if-no-files-found: warn
           path: |
-            sib.txt
-            sentences.jsonl
-            chunks.jsonl
-            raw_mentions.jsonl
-            mentions.jsonl
-            mentions_resolved.jsonl
-            entities.jsonl
-            raw_relationships.jsonl
-            candidates.jsonl
-            relationships.jsonl
-            rejected.jsonl
+            sib*.txt
+            *.jsonl
