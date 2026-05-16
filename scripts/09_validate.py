@@ -45,12 +45,35 @@ def validate(candidate: dict) -> tuple[bool, str]:
     return True, "ok"
 
 
+def load_jsonl(path: pathlib.Path) -> list[dict]:
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def rejection_category(reason: str) -> str:
+    lowered = reason.lower()
+    if "unknown predicate" in lowered or "not in schema" in lowered:
+        return "predicate_mismatch"
+    if "id must have a type prefix" in lowered:
+        return "id_format"
+    if "not in dom(" in lowered or "not in ran(" in lowered:
+        return "schema_domain_range"
+    if "epistemic_status" in lowered:
+        return "epistemic_status"
+    return "other"
+
+
 def main(
     candidates_file: str = "candidates.jsonl",
     relationships_out: str = "relationships.jsonl",
     rejected_file: str = "rejected.jsonl",
+    mentions_resolved_file: str = "mentions_resolved.jsonl",
+    entities_file: str = "entities.jsonl",
+    raw_relationships_file: str = "raw_relationships.jsonl",
+    chunks_file: str = "chunks.jsonl",
 ) -> None:
-    candidates = [json.loads(l) for l in pathlib.Path(candidates_file).read_text(encoding="utf-8").splitlines() if l.strip()]
+    candidates = load_jsonl(pathlib.Path(candidates_file))
 
     valid, rejected = [], []
     for candidate in candidates:
@@ -71,14 +94,47 @@ def main(
         for rel in valid:
             f.write(json.dumps(rel) + "\n")
 
-    total_rejected = len([line for line in rej_path.read_text(encoding="utf-8").splitlines() if line.strip()])
+    all_rejected = load_jsonl(rej_path)
+    total_rejected = len(all_rejected)
     print(f"Valid:    {len(valid)}")
     print(f"Rejected: {len(rejected)} (validator) + prior stages = {total_rejected} total")
 
-    if rejected:
-        print("\nRejection breakdown:")
-        for reason, n in Counter(r["failure_reason"].split("not in")[0].strip() for r in rejected).most_common():
-            print(f"  {n:3d}x  {reason}")
+    if all_rejected:
+        print("\nRejection breakdown by category:")
+        for category, n in Counter(rejection_category(r.get("failure_reason", "")) for r in all_rejected).most_common():
+            print(f"  {n:3d}x  {category}")
+
+        print("\nRejection breakdown by stage:")
+        for stage, n in Counter(r.get("stage", "unknown") for r in all_rejected).most_common():
+            print(f"  {n:3d}x  {stage}")
+
+    mentions_resolved = load_jsonl(pathlib.Path(mentions_resolved_file))
+    entities = load_jsonl(pathlib.Path(entities_file))
+    raw_relationships = load_jsonl(pathlib.Path(raw_relationships_file))
+    chunks = load_jsonl(pathlib.Path(chunks_file))
+
+    print("\nCoverage summary:")
+    print(f"  mentions_resolved.jsonl: {len(mentions_resolved)}")
+    print(f"  entities.jsonl:          {len(entities)}")
+    print(f"  raw_relationships.jsonl: {len(raw_relationships)}")
+    print(f"  candidates.jsonl:        {len(candidates)}")
+    print(f"  relationships.jsonl:     {len(valid)}")
+    print(f"  rejected.jsonl:          {total_rejected}")
+
+    if raw_relationships and len(chunks) > 0:
+        raw_per_chunk = Counter()
+        raw_total = 0
+        for rel in raw_relationships:
+            raw_total += 1
+            chunk_id = rel.get("chunk_id")
+            if chunk_id is not None:
+                raw_per_chunk[chunk_id] += 1
+        avg = raw_total / len(chunks)
+        print(f"\nRaw relationships per chunk: avg {avg:.2f} across {len(chunks)} chunks")
+        if raw_per_chunk:
+            print("Top chunks by raw relationship count:")
+            for chunk_id, n in raw_per_chunk.most_common(5):
+                print(f"  chunk {chunk_id}: {n}")
 
 
 if __name__ == "__main__":

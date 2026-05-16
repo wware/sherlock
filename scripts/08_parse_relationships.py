@@ -31,6 +31,29 @@ KNOWN_PREDICATES = {
     "employed_by",
 }
 EPISTEMIC_STATUSES = {"ground_truth", "believed", "false_belief", "inferred"}
+# Defensive normalization for common LLM output variants, even though prompts require canonical predicates.
+PREDICATE_ALIASES = {
+    "located_in": "located_at",
+    "in_location": "located_at",
+    "is_at": "located_at",
+    "knows": "knows_at",
+    "acquainted_with": "knows_at",
+    "has": "possesses",
+    "owns": "possesses",
+    "holds": "possesses",
+    "carries": "possesses",
+    "written_by": "authored",
+    "wrote": "authored",
+    "sent": "authored",
+    "inside": "contains",
+    "works_for": "employed_by",
+    "employed_at": "employed_by",
+}
+
+
+def canonicalize_predicate(value: str) -> str:
+    normalized = value.strip().lower().replace(" ", "_").replace("-", "_")
+    return PREDICATE_ALIASES.get(normalized, normalized)
 
 
 if BaseModel:
@@ -49,7 +72,7 @@ if BaseModel:
         @field_validator("predicate")
         @classmethod
         def normalise_predicate(cls, value: str) -> str:
-            return value.strip().lower().replace(" ", "_").replace("-", "_")
+            return canonicalize_predicate(value)
 
         @field_validator("subject_id", "object_id")
         @classmethod
@@ -76,7 +99,7 @@ else:
             sentence_ids: tuple[int, ...] = (),
             chunk_id: int | None = None,
         ) -> None:
-            predicate = predicate.strip().lower().replace(" ", "_").replace("-", "_")
+            predicate = canonicalize_predicate(predicate)
             if ":" not in subject_id:
                 raise ValueError(f"ID must have a type prefix, got {subject_id!r}")
             if ":" not in object_id:
