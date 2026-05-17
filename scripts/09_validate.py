@@ -153,11 +153,15 @@ def main(
     relationships_per_chunk = len(valid) / chunk_count
 
     resolved_mentions = sum(1 for mention in mentions_resolved if mention.get("canonical_id"))
-    resolved_ratio = resolved_mentions / max(len(mentions_resolved), 1)
+    total_mentions = len(mentions_resolved)
+    resolved_ratio = resolved_mentions / max(total_mentions, 1)
 
     print(f"  min relationships:          {min_relationships} (actual {len(valid)})")
     print(f"  min rel/chunk:              {min_relationships_per_chunk:.3f} (actual {relationships_per_chunk:.3f})")
-    print(f"  min resolved mention ratio: {min_resolved_ratio:.3f} (actual {resolved_ratio:.3f})")
+    print(
+        f"  min resolved mention ratio: {min_resolved_ratio:.3f} "
+        f"(actual {resolved_ratio:.3f} = {resolved_mentions}/{max(total_mentions, 1)})"
+    )
 
     if len(valid) < min_relationships:
         gate_failures.append("relationships below threshold")

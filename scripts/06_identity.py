@@ -160,6 +160,8 @@ def resolve_canonical_id(mention: dict) -> str | None:
         return IDENTITY_MAP[key]
 
     if key == "monica":
+        # In this corpus, standalone "Monica" mentions are references to St. Monica's Church.
+        # Keep this constrained to location/event/moment mentions to avoid person-name collisions.
         mention_type = str(mention.get("type", "")).strip().lower()
         if mention_type in {"location", "event", "moment"}:
             return "location:st_monica_church"

@@ -73,7 +73,7 @@ def canonicalize_moment(value: str | None, sentence_ids: tuple[int, ...]) -> str
     if re.fullmatch(r"moment:sent_\d+", raw):
         return raw
 
-    sent_match = re.search(r"(?:sent(?:ence)?[_\s-]*)(\d+)", raw)
+    sent_match = re.search(r"\bsent(?:ence)?[_\s-]*(\d+)\b", raw)
     if sent_match:
         return f"moment:sent_{sent_match.group(1)}"
 

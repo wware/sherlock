@@ -21,6 +21,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -47,7 +48,7 @@ jobs:
         id: prellm-cache
         uses: actions/cache@v4
         with:
-          key: prellm-${{ runner.os }}-${{ steps.source-hash.outputs.sib_sha }}-${{ hashFiles('scripts/fetch_sib.sh', 'scripts/01_sentencize.py', 'scripts/02_review_sentences.py', 'scripts/03_chunk.py') }}
+          key: prellm-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ steps.source-hash.outputs.sib_sha }}-${{ hashFiles('.github/workflows/run-pipeline.yml', 'scripts/fetch_sib.sh', 'scripts/01_sentencize.py', 'scripts/02_review_sentences.py', 'scripts/03_chunk.py') }}
           path: |
             sib.txt
             sentences.jsonl
