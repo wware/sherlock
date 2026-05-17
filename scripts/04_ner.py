@@ -11,9 +11,15 @@ Set ANTHROPIC_API_KEY in environment.
 import json
 import pathlib
 import re
+import sys
 
 import anthropic
-from llm_json import anthropic_text, parse_llm_json
+
+try:
+    from llm_json import anthropic_text, parse_llm_json
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parent))
+    from llm_json import anthropic_text, parse_llm_json
 
 ENTITY_TYPES = ["Person", "Location", "Object", "Document", "Moment", "Event", "Disguise", "Plan"]
 PROMPT_PATH = pathlib.Path("prompts/ner_system_prompt.txt")
