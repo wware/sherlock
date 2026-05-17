@@ -29,7 +29,8 @@ def _raw_decode_any(text: str) -> Any:
             return obj
         except json.JSONDecodeError:
             continue
-    raise json.JSONDecodeError("No JSON object/array found in response", text, 0)
+    snippet = text[:160].replace("\n", "\\n")
+    raise json.JSONDecodeError(f"No JSON object/array found in response snippet: {snippet!r}", text, 0)
 
 
 def parse_llm_json(raw_text: str) -> Any:
@@ -45,7 +46,7 @@ def parse_llm_json(raw_text: str) -> Any:
             last_error = exc
     if last_error:
         raise last_error
-    raise json.JSONDecodeError("Empty response", raw_text, 0)
+    raise json.JSONDecodeError("No valid JSON found in response", raw_text, 0)
 
 
 def anthropic_text(resp: Any) -> str:
