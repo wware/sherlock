@@ -98,7 +98,7 @@ jobs:
             echo "$(wc -l < "$f")  $f"
           done
           rel_count=$(wc -l < relationships.jsonl)
-          if (( rel_count < MIN_RELATIONSHIPS )); then
+          if (( rel_count < ${MIN_RELATIONSHIPS} )); then
             echo "ERROR: relationships.jsonl below minimum threshold (${MIN_RELATIONSHIPS})"
             exit 1
           fi
