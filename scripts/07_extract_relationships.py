@@ -13,6 +13,7 @@ import json
 import pathlib
 
 import anthropic
+from llm_json import anthropic_text, parse_llm_json
 
 PROMPT_PATH = pathlib.Path("prompts/relationship_system_prompt.txt")
 
@@ -82,7 +83,7 @@ def main(
                 messages=[{"role": "user", "content": user_msg}],
             )
             try:
-                result = json.loads(resp.content[0].text)
+                result = parse_llm_json(anthropic_text(resp))
                 relationships = result.get("relationships", [])
                 if not relationships:
                     chunk_response_empty += 1
