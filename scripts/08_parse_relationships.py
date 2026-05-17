@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 from typing import Literal
 
 try:
@@ -56,6 +57,33 @@ def canonicalize_predicate(value: str) -> str:
     return PREDICATE_ALIASES.get(normalized, normalized)
 
 
+def canonicalize_moment(value: str | None, sentence_ids: tuple[int, ...]) -> str | None:
+    if sentence_ids:
+        default = f"moment:sent_{min(sentence_ids)}"
+    else:
+        default = None
+
+    if value is None:
+        return default
+
+    raw = value.strip().lower()
+    if not raw:
+        return default
+
+    if re.fullmatch(r"moment:sent_\d+", raw):
+        return raw
+
+    sent_match = re.search(r"\bsent(?:ence)?[_\s-]*(\d+)\b", raw)
+    if sent_match:
+        return f"moment:sent_{sent_match.group(1)}"
+
+    trailing_num = re.search(r"(\d+)$", raw)
+    if trailing_num:
+        return f"moment:sent_{trailing_num.group(1)}"
+
+    return default
+
+
 if BaseModel:
     class RelationshipCandidate(BaseModel):
         model_config = ConfigDict(frozen=True)
@@ -81,6 +109,13 @@ if BaseModel:
                 raise ValueError(f"ID must have a type prefix, got {value!r}")
             return value.strip()
 
+        @model_validator(mode="before")
+        @classmethod
+        def normalise_moment(cls, values: dict) -> dict:
+            sentence_ids = tuple(values.get("sentence_ids", []))
+            values["at_moment"] = canonicalize_moment(values.get("at_moment"), sentence_ids)
+            return values
+
         @model_validator(mode="after")
         def predicate_must_be_known(self) -> "RelationshipCandidate":
             if self.predicate not in KNOWN_PREDICATES:
@@ -100,6 +135,8 @@ else:
             chunk_id: int | None = None,
         ) -> None:
             predicate = canonicalize_predicate(predicate)
+            sentence_ids = tuple(sentence_ids)
+            at_moment = canonicalize_moment(at_moment, sentence_ids)
             if ":" not in subject_id:
                 raise ValueError(f"ID must have a type prefix, got {subject_id!r}")
             if ":" not in object_id:
@@ -114,7 +151,7 @@ else:
             self.at_moment = at_moment
             self.known_to = frozenset(known_to)
             self.epistemic_status = epistemic_status
-            self.sentence_ids = tuple(sentence_ids)
+            self.sentence_ids = sentence_ids
             self.chunk_id = chunk_id
 
         def model_dump_json(self) -> str:

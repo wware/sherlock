@@ -8,8 +8,10 @@ Output: relationships.jsonl  (valid triples)
 
 from __future__ import annotations
 
+import argparse
 import json
 import pathlib
+import re
 from collections import Counter
 
 SCHEMA = {
@@ -42,6 +44,12 @@ def validate(candidate: dict) -> tuple[bool, str]:
         return False, f"subject prefix {subject_prefix!r} not in dom({predicate})={dom}"
     if object_prefix not in ran:
         return False, f"object prefix {object_prefix!r} not in ran({predicate})={ran}"
+
+    at_moment = candidate.get("at_moment")
+    if at_moment is not None:
+        at_moment = str(at_moment).strip()
+        if at_moment and not re.fullmatch(r"moment:sent_\d+", at_moment):
+            return False, f"at_moment must be sentence-indexed form moment:sent_<n>, got {at_moment!r}"
     return True, "ok"
 
 
@@ -72,6 +80,9 @@ def main(
     entities_file: str = "entities.jsonl",
     raw_relationships_file: str = "raw_relationships.jsonl",
     chunks_file: str = "chunks.jsonl",
+    min_relationships: int = 1,
+    min_relationships_per_chunk: float = 0.03,
+    min_resolved_ratio: float = 0.15,
 ) -> None:
     candidates = load_jsonl(pathlib.Path(candidates_file))
 
@@ -136,6 +147,59 @@ def main(
             for chunk_id, n in raw_per_chunk.most_common(5):
                 print(f"  chunk {chunk_id}: {n}")
 
+    print("\nQuality gates:")
+    gate_failures = []
+    chunk_count = max(len(chunks), 1)
+    relationships_per_chunk = len(valid) / chunk_count
+
+    resolved_mentions = sum(1 for mention in mentions_resolved if mention.get("canonical_id"))
+    total_mentions = len(mentions_resolved)
+    resolved_ratio = resolved_mentions / max(total_mentions, 1)
+
+    print(f"  min relationships:          {min_relationships} (actual {len(valid)})")
+    print(f"  min rel/chunk:              {min_relationships_per_chunk:.3f} (actual {relationships_per_chunk:.3f})")
+    if total_mentions == 0:
+        ratio_detail = "no mentions present"
+    else:
+        ratio_detail = f"{resolved_mentions}/{total_mentions}"
+    print(f"  min resolved mention ratio: {min_resolved_ratio:.3f} (actual {resolved_ratio:.3f} = {ratio_detail})")
+
+    if len(valid) < min_relationships:
+        gate_failures.append("relationships below threshold")
+    if relationships_per_chunk < min_relationships_per_chunk:
+        gate_failures.append("relationships-per-chunk below threshold")
+    if resolved_ratio < min_resolved_ratio:
+        gate_failures.append("resolved mention ratio below threshold")
+
+    if gate_failures:
+        print("\nQuality gate failures:")
+        for failure in gate_failures:
+            print(f"  - {failure}")
+        raise SystemExit(1)
+
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Validate relationship candidates and enforce quality gates.")
+    parser.add_argument("--candidates_file", default="candidates.jsonl")
+    parser.add_argument("--relationships_out", default="relationships.jsonl")
+    parser.add_argument("--rejected_file", default="rejected.jsonl")
+    parser.add_argument("--mentions_resolved_file", default="mentions_resolved.jsonl")
+    parser.add_argument("--entities_file", default="entities.jsonl")
+    parser.add_argument("--raw_relationships_file", default="raw_relationships.jsonl")
+    parser.add_argument("--chunks_file", default="chunks.jsonl")
+    parser.add_argument("--min_relationships", type=int, default=1)
+    parser.add_argument("--min_relationships_per_chunk", type=float, default=0.03)
+    parser.add_argument("--min_resolved_ratio", type=float, default=0.15)
+    args = parser.parse_args()
+    main(
+        candidates_file=args.candidates_file,
+        relationships_out=args.relationships_out,
+        rejected_file=args.rejected_file,
+        mentions_resolved_file=args.mentions_resolved_file,
+        entities_file=args.entities_file,
+        raw_relationships_file=args.raw_relationships_file,
+        chunks_file=args.chunks_file,
+        min_relationships=args.min_relationships,
+        min_relationships_per_chunk=args.min_relationships_per_chunk,
+        min_resolved_ratio=args.min_resolved_ratio,
+    )

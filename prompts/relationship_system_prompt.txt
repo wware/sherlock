@@ -30,6 +30,7 @@ Rules:
 - predicate must be from the permitted list exactly as written.
 - Do not invent predicate aliases (for example, do not output `located_in`, `has`, `works_for`, `wrote`).
 - Use only entity IDs listed for the current passage; do not output IDs that are not listed.
+- at_moment must be sentence-indexed in the form moment:sent_<sentence_id> when present (for example, moment:sent_42).
 - epistemic_status: ground_truth = fact; believed = character thinks so; false_belief = character thinks so but wrong; inferred = logically follows.
 - known_to: which entities know this fact at this point in the story.
 - Return empty relationships array if no clear typed relationships are present.

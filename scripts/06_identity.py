@@ -22,25 +22,46 @@ IDENTITY_MAP = {
     "dr watson": "person:watson",
     "irene": "person:irene_adler",
     "irene adler": "person:irene_adler",
+    "adler": "person:irene_adler",
     "miss adler": "person:irene_adler",
     "mrs. norton": "person:irene_adler",
     "mrs norton": "person:irene_adler",
+    "mrs. godfrey norton": "person:irene_adler",
+    "mrs godfrey norton": "person:irene_adler",
     "the woman": "person:irene_adler",
     "the king": "person:king_of_bohemia",
     "his majesty": "person:king_of_bohemia",
+    "his majesty, the king of bohemia": "person:king_of_bohemia",
     "the count von kramm": "person:king_of_bohemia",
     "wilhelm": "person:king_of_bohemia",
+    "my client": "person:king_of_bohemia",
+    "client": "person:king_of_bohemia",
     "norton": "person:godfrey_norton",
     "godfrey norton": "person:godfrey_norton",
     "mr. norton": "person:godfrey_norton",
+    "mr norton": "person:godfrey_norton",
+    "husband": "person:godfrey_norton",
+    "boswell": "person:watson",
     "baker street": "location:baker_street",
     "221b": "location:baker_street",
     "briony lodge": "location:briony_lodge",
     "serpentine avenue": "location:briony_lodge",
     "st. monica": "location:st_monica_church",
+    "st monica": "location:st_monica_church",
+    "st. monica's church": "location:st_monica_church",
+    "st monica's church": "location:st_monica_church",
+    "monica's church": "location:st_monica_church",
+    "church of st. monica": "location:st_monica_church",
     "the photograph": "object:photograph",
+    "photograph": "object:photograph",
     "the picture": "object:photograph",
-    "the letter": "object:letter",
+    "picture": "object:photograph",
+    "portrait": "object:photograph",
+    "cabinet photograph": "object:photograph",
+    "the letter": "document:letter",
+    "letter": "document:letter",
+    "the note": "document:letter",
+    "note": "document:letter",
 }
 
 ENTITY_META = {
@@ -53,7 +74,7 @@ ENTITY_META = {
     "location:briony_lodge": {"name": "Briony Lodge", "type": "Location", "wiki": "https://bakerstreet.fandom.com/wiki/Briony_Lodge"},
     "location:st_monica_church": {"name": "St. Monica's Church", "type": "Location", "wiki": None},
     "object:photograph": {"name": "The photograph", "type": "Object", "wiki": None},
-    "object:letter": {"name": "The letter", "type": "Object", "wiki": None},
+    "document:letter": {"name": "The letter", "type": "Document", "wiki": None},
 }
 
 TYPE_PREFIX = {
@@ -65,6 +86,7 @@ TYPE_PREFIX = {
     "event": "event",
     "disguise": "disguise",
     "plan": "plan",
+    "organisation": "organisation",
 }
 MIN_SURFACE_LENGTH = 3
 
@@ -136,6 +158,13 @@ def resolve_canonical_id(mention: dict) -> str | None:
     key = normalize_surface(surface_form)
     if key in IDENTITY_MAP:
         return IDENTITY_MAP[key]
+
+    if key == "monica":
+        # In this corpus, standalone "Monica" mentions are references to St. Monica's Church.
+        # Keep this constrained to location/event/moment mentions to avoid person-name collisions.
+        mention_type = str(mention.get("type", "")).strip().lower()
+        if mention_type in {"location", "event", "moment"}:
+            return "location:st_monica_church"
 
     # Try matching without common honorifics/articles.
     simplified = re.sub(r"^(mr|mrs|ms|dr|miss|sir|lady)\.?\s+", "", key)

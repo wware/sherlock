@@ -12,28 +12,102 @@ jobs:
     environment: RunEnv
     permissions:
       contents: read
+    env:
+      MIN_RELATIONSHIPS: "1"
+      MIN_RELATIONSHIPS_PER_CHUNK: "0.03"
+      MIN_RESOLVED_RATIO: "0.15"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: python -m pip install --upgrade pip "anthropic>=0.18.0,<1.0.0"
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install \
+            "anthropic>=0.52.0,<1.0.0" \
+            "pydantic>=2.7.0,<3.0.0" \
+            "spacy>=3.7.0,<4.0.0"
 
-      - name: Run full pipeline
+      - name: Install spaCy English model
+        run: python -m spacy download en_core_web_sm
+
+      - name: Fetch source text
+        run: bash scripts/fetch_sib.sh
+
+      - name: Compute source hash
+        id: source-hash
+        run: echo "sib_sha=$(sha256sum sib.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Restore pre-LLM deterministic cache
+        id: prellm-cache
+        uses: actions/cache@v4
+        with:
+          key: prellm-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ steps.source-hash.outputs.sib_sha }}-${{ hashFiles('.github/workflows/run-pipeline.yml', 'scripts/fetch_sib.sh', 'scripts/01_sentencize.py', 'scripts/02_review_sentences.py', 'scripts/03_chunk.py') }}
+          path: |
+            sib.txt
+            sentences.jsonl
+            chunks.jsonl
+
+      - name: Build deterministic pre-LLM artifacts
+        if: steps.prellm-cache.outputs.cache-hit != 'true'
+        run: |
+          python3 scripts/01_sentencize.py
+          python3 scripts/02_review_sentences.py
+          python3 scripts/03_chunk.py
+
+      - name: Run LLM and graph stages
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: bash scripts/run_pipeline.sh
+        run: |
+          python3 scripts/04_ner.py
+          python3 scripts/05_mention_store.py
+          python3 scripts/06_identity.py
+          python3 scripts/07_extract_relationships.py
+          python3 scripts/08_parse_relationships.py
+          python3 scripts/09_validate.py \
+            --min_relationships "${MIN_RELATIONSHIPS}" \
+            --min_relationships_per_chunk "${MIN_RELATIONSHIPS_PER_CHUNK}" \
+            --min_resolved_ratio "${MIN_RESOLVED_RATIO}"
+
+      - name: Post-run sanity checks
+        run: |
+          set -euo pipefail
+          critical_files=(
+            "sib.txt"
+            "sentences.jsonl"
+            "chunks.jsonl"
+            "raw_mentions.jsonl"
+            "mentions.jsonl"
+            "mentions_resolved.jsonl"
+            "entities.jsonl"
+            "raw_relationships.jsonl"
+            "candidates.jsonl"
+            "relationships.jsonl"
+          )
+          for f in "${critical_files[@]}"; do
+            if [[ ! -s "$f" ]]; then
+              echo "ERROR: Missing or empty critical output: $f"
+              exit 1
+            fi
+            echo "$(wc -l < "$f")  $f"
+          done
+          rel_count=$(wc -l < relationships.jsonl)
+          if (( rel_count < ${MIN_RELATIONSHIPS} )); then
+            echo "ERROR: relationships.jsonl below minimum threshold (${MIN_RELATIONSHIPS})"
+            exit 1
+          fi
 
       - name: Upload pipeline artifacts
-        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sherlock-pipeline-${{ github.run_number }}
+          retention-days: 14
           if-no-files-found: error
           path: |
             sib*.txt
