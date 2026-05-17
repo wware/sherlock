@@ -16,7 +16,7 @@ def _candidate_texts(raw_text: str) -> list[str]:
     text = raw_text.strip()
     candidates = [text] if text else []
 
-    fenced = re.findall(r"```(?:json)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE)
+    fenced = re.findall(r"```(?:json\b)?\s*([\s\S]*?)```", text, flags=re.IGNORECASE)
     candidates.extend(block.strip() for block in fenced if block.strip())
     return candidates
 
@@ -31,7 +31,7 @@ def _raw_decode_any(text: str) -> Any:
             return obj
         except json.JSONDecodeError:
             continue
-    snippet = text[:MAX_SNIPPET_LENGTH].replace("\n", "\\n")
+    snippet = text.encode("utf-8")[:MAX_SNIPPET_LENGTH].decode("utf-8", errors="ignore").replace("\n", "\\n")
     msg = f"No JSON object/array found in response snippet: {snippet!r}"
     raise json.JSONDecodeError(msg, text, 0)
 
