@@ -9,6 +9,8 @@ import json
 import re
 from typing import Any
 
+MAX_SNIPPET_LENGTH = 160
+
 
 def _candidate_texts(raw_text: str) -> list[str]:
     text = raw_text.strip()
@@ -29,11 +31,13 @@ def _raw_decode_any(text: str) -> Any:
             return obj
         except json.JSONDecodeError:
             continue
-    snippet = text[:160].replace("\n", "\\n")
-    raise json.JSONDecodeError(f"No JSON object/array found in response snippet: {snippet!r}", text, 0)
+    snippet = text[:MAX_SNIPPET_LENGTH].replace("\n", "\\n")
+    msg = f"No JSON object/array found in response snippet: {snippet!r}"
+    raise json.JSONDecodeError(msg, text, 0)
 
 
 def parse_llm_json(raw_text: str) -> Any:
+    """Parse JSON from plain, fenced, or mixed-content LLM text responses."""
     last_error: Exception | None = None
     for candidate in _candidate_texts(raw_text):
         try:
@@ -50,6 +54,7 @@ def parse_llm_json(raw_text: str) -> Any:
 
 
 def anthropic_text(resp: Any) -> str:
+    """Extract and concatenate text blocks from an Anthropic messages response."""
     parts = []
     for block in getattr(resp, "content", []) or []:
         text = getattr(block, "text", None)
