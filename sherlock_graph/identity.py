@@ -203,7 +203,9 @@ class HolmesIdentityResolver:
         meta = HOLMES_ENTITY_META.get(entity_id, {"name": inferred_name, "type": inferred_type, "wiki": None})
         entity_cls = self.ENTITY_CLASS_BY_PREFIX.get(inferred_prefix, EntityNode)
         if entity_cls is EntityNode:
+            # For unknown prefixes, preserve metadata-provided display type when available.
             entity_type = meta.get("type", inferred_type)
         else:
+            # For typed subclasses, enforce class-compatible display type derived from prefix.
             entity_type = self.DISPLAY_TYPE_BY_PREFIX.get(inferred_prefix, inferred_type)
         return entity_cls(id=entity_id, name=meta["name"], wiki=meta["wiki"], type=entity_type)

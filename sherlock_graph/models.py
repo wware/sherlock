@@ -39,6 +39,8 @@ class EntityNode(BaseModel):
         return self.model_dump(mode="json")
 
 
+# Entity JSON keeps legacy display types (e.g., "Person") for output compatibility,
+# while schema validation uses lowercase ID prefixes and NodeType enum values.
 class PersonEntity(EntityNode):
     type: Literal["Person"] = "Person"
 
