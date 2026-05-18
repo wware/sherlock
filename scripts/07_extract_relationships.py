@@ -14,6 +14,7 @@ import pathlib
 import sys
 
 import anthropic
+from sherlock_graph.schema import canonicalize_predicate
 
 try:
     from llm_json import anthropic_text, parse_llm_json
@@ -94,6 +95,8 @@ def main(
                 if not relationships:
                     chunk_response_empty += 1
                 for rel in relationships:
+                    if "predicate" in rel and isinstance(rel["predicate"], str):
+                        rel["predicate"] = canonicalize_predicate(rel["predicate"])
                     rel["chunk_id"] = chunk_id
                     f.write(json.dumps(rel) + "\n")
                     written += 1

@@ -14,6 +14,7 @@ import re
 import sys
 
 import anthropic
+from sherlock_graph.schema import HOLMES_LLM_ENTITY_TYPES
 
 try:
     from llm_json import anthropic_text, parse_llm_json
@@ -21,7 +22,6 @@ except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
     sys.path.append(str(pathlib.Path(__file__).resolve().parent))
     from llm_json import anthropic_text, parse_llm_json
 
-ENTITY_TYPES = ["Person", "Location", "Object", "Document", "Moment", "Event", "Disguise", "Plan"]
 PROMPT_PATH = pathlib.Path("prompts/ner_system_prompt.txt")
 
 
@@ -66,7 +66,7 @@ def main(
             try:
                 result = parse_llm_json(anthropic_text(resp))
                 for entity in result.get("entities", []):
-                    if entity.get("type") not in ENTITY_TYPES:
+                    if entity.get("type") not in HOLMES_LLM_ENTITY_TYPES:
                         continue
                     surface_form = str(entity.get("surface_form", "")).strip()
                     if not surface_form:
