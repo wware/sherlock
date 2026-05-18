@@ -5,21 +5,19 @@ from typing import Any
 
 from .models import EntityNode, RelationshipCandidate
 
-KGRAPH_IMPORT_CANDIDATES = (
-    ("kgschema", "BaseEntity", "BaseRelationship", "DomainSchema"),
-    ("kgraph", "BaseEntity", "BaseRelationship", "DomainSchema"),
-)
+KGRAPH_MODULE_CANDIDATES = ("kgschema", "kgraph")
+KGRAPH_SYMBOL_NAMES = ("BaseEntity", "BaseRelationship", "DomainSchema")
 
 
 def _resolve_kgraph_symbols() -> tuple[type[Any] | None, type[Any] | None, type[Any] | None]:
-    for module_name, entity_name, relationship_name, schema_name in KGRAPH_IMPORT_CANDIDATES:
+    for module_name in KGRAPH_MODULE_CANDIDATES:
         try:
             module = importlib.import_module(module_name)
         except (ModuleNotFoundError, ImportError):
             continue
-        base_entity = getattr(module, entity_name, None)
-        base_relationship = getattr(module, relationship_name, None)
-        domain_schema = getattr(module, schema_name, None)
+        base_entity = getattr(module, KGRAPH_SYMBOL_NAMES[0], None)
+        base_relationship = getattr(module, KGRAPH_SYMBOL_NAMES[1], None)
+        domain_schema = getattr(module, KGRAPH_SYMBOL_NAMES[2], None)
         if base_entity and base_relationship and domain_schema:
             return base_entity, base_relationship, domain_schema
     return None, None, None

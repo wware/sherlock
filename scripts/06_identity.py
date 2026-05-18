@@ -27,7 +27,11 @@ def main(
     resolved_out: str = "mentions_resolved.jsonl",
     entities_out: str = "entities.jsonl",
 ) -> None:
-    mentions = [Mention.model_validate_json(line) for line in pathlib.Path(in_file).read_text(encoding="utf-8").splitlines() if line.strip()]
+    mentions = []
+    with pathlib.Path(in_file).open("r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                mentions.append(Mention.model_validate_json(line))
     resolver = HolmesIdentityResolver()
 
     resolved = []
