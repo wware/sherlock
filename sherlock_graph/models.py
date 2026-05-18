@@ -6,8 +6,6 @@ from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
 from .schema import HOLMES_SCHEMA, canonicalize_moment, canonicalize_predicate, extract_prefix
 
-EPISTEMIC_STATUSES = {"ground_truth", "believed", "false_belief", "inferred"}
-
 
 class Mention(BaseModel):
     model_config = ConfigDict(frozen=True, extra="allow")

@@ -136,6 +136,18 @@ GENERIC_SLUGS = {
 
 
 class HolmesIdentityResolver:
+    DISPLAY_TYPE_BY_PREFIX = {
+        "person": "Person",
+        "location": "Location",
+        "object": "Object",
+        "document": "Document",
+        "moment": "Moment",
+        "event": "Event",
+        "disguise": "Disguise",
+        "plan": "Plan",
+        "organisation": "Organisation",
+    }
+
     ENTITY_CLASS_BY_PREFIX = {
         "person": PersonEntity,
         "location": LocationEntity,
@@ -187,7 +199,7 @@ class HolmesIdentityResolver:
 
     def build_entity(self, entity_id: str, inferred_name: str) -> EntityNode:
         inferred_prefix = entity_id.split(":", 1)[0] if ":" in entity_id else ""
-        inferred_type = inferred_prefix.capitalize() if HOLMES_SCHEMA.prefix_for_mention_type(inferred_prefix) else "Unknown"
+        inferred_type = self.DISPLAY_TYPE_BY_PREFIX.get(inferred_prefix, "Object")
         meta = HOLMES_ENTITY_META.get(entity_id, {"name": inferred_name, "type": inferred_type, "wiki": None})
         entity_cls = self.ENTITY_CLASS_BY_PREFIX.get(inferred_prefix, EntityNode)
         return entity_cls(id=entity_id, name=meta["name"], wiki=meta["wiki"], type=meta["type"])
