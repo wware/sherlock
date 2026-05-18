@@ -12,38 +12,21 @@ import argparse
 import json
 import pathlib
 import re
+import sys
 from collections import Counter
 
-SCHEMA = {
-    "located_at": {"dom": {"person", "object"}, "ran": {"location"}},
-    "knows_at": {"dom": {"person"}, "ran": {"person"}},
-    "possesses": {"dom": {"person"}, "ran": {"object"}},
-    "disguised_as": {"dom": {"person"}, "ran": {"disguise"}},
-    "authored": {"dom": {"person"}, "ran": {"document"}},
-    "contains": {"dom": {"location"}, "ran": {"object"}},
-    "married_to": {"dom": {"person"}, "ran": {"person"}},
-    "employed_by": {"dom": {"person"}, "ran": {"person", "organisation"}},
-}
-
-
-def prefix(entity_id: str) -> str:
-    return entity_id.split(":", 1)[0] if ":" in entity_id else ""
+try:
+    from sherlock_graph.schema import HOLMES_SCHEMA
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.schema import HOLMES_SCHEMA
 
 
 def validate(candidate: dict) -> tuple[bool, str]:
     predicate = candidate.get("predicate", "")
-    if predicate not in SCHEMA:
-        return False, f"predicate {predicate!r} not in schema"
-
-    dom = SCHEMA[predicate]["dom"]
-    ran = SCHEMA[predicate]["ran"]
-    subject_prefix = prefix(candidate.get("subject_id", ""))
-    object_prefix = prefix(candidate.get("object_id", ""))
-
-    if subject_prefix not in dom:
-        return False, f"subject prefix {subject_prefix!r} not in dom({predicate})={dom}"
-    if object_prefix not in ran:
-        return False, f"object prefix {object_prefix!r} not in ran({predicate})={ran}"
+    allowed, reason = HOLMES_SCHEMA.allows(candidate.get("subject_id", ""), predicate, candidate.get("object_id", ""))
+    if not allowed:
+        return False, reason
 
     at_moment = candidate.get("at_moment")
     if at_moment is not None:
