@@ -26,10 +26,12 @@ def main(
     candidates_out: str = "candidates.jsonl",
     rejected_out: str = "rejected.jsonl",
 ) -> None:
-    raw = [json.loads(line) for line in pathlib.Path(in_file).read_text(encoding="utf-8").splitlines() if line.strip()]
+    raw_relationships = [
+        json.loads(line) for line in pathlib.Path(in_file).read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
 
     candidates, rejected = [], []
-    for rel in raw:
+    for rel in raw_relationships:
         try:
             candidate = RelationshipCandidate(
                 subject_id=rel["subject_id"],

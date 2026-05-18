@@ -78,7 +78,10 @@ def canonicalize_predicate(value: str) -> str:
 
 def canonicalize_moment(value: str | None, sentence_ids: tuple[int, ...]) -> str | None:
     non_negative_ids = tuple(sid for sid in sentence_ids if isinstance(sid, int) and sid >= 0)
-    default = f"moment:sent_{min(non_negative_ids)}" if non_negative_ids else None
+    if non_negative_ids:
+        default = f"moment:sent_{min(non_negative_ids)}"
+    else:
+        default = None
     if value is None:
         return default
 

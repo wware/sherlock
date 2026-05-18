@@ -15,7 +15,7 @@ def _resolve_kgraph_symbols() -> tuple[type[Any] | None, type[Any] | None, type[
     for module_name, entity_name, relationship_name, schema_name in KGRAPH_IMPORT_CANDIDATES:
         try:
             module = importlib.import_module(module_name)
-        except Exception:
+        except (ModuleNotFoundError, ImportError):
             continue
         base_entity = getattr(module, entity_name, None)
         base_relationship = getattr(module, relationship_name, None)
