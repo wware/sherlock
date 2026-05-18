@@ -202,4 +202,7 @@ class HolmesIdentityResolver:
         inferred_type = self.DISPLAY_TYPE_BY_PREFIX.get(inferred_prefix, "Object")
         meta = HOLMES_ENTITY_META.get(entity_id, {"name": inferred_name, "type": inferred_type, "wiki": None})
         entity_cls = self.ENTITY_CLASS_BY_PREFIX.get(inferred_prefix, EntityNode)
-        return entity_cls(id=entity_id, name=meta["name"], wiki=meta["wiki"], type=meta["type"])
+        entity_type = meta.get("type", inferred_type)
+        if entity_cls is not EntityNode:
+            entity_type = entity_cls.model_fields["type"].default
+        return entity_cls(id=entity_id, name=meta["name"], wiki=meta["wiki"], type=entity_type)
