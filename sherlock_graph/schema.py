@@ -77,6 +77,7 @@ def canonicalize_predicate(value: str) -> str:
 
 
 def canonicalize_moment(value: str | None, sentence_ids: tuple[int, ...]) -> str | None:
+    # Exclude bools explicitly: bool is a subclass of int but not a valid sentence identifier type.
     non_negative_ids = tuple(sid for sid in sentence_ids if isinstance(sid, int) and not isinstance(sid, bool) and sid >= 0)
     if non_negative_ids:
         default = f"moment:sent_{min(non_negative_ids)}"
