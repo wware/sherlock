@@ -10,9 +10,15 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 
-from sherlock_graph.models import RelationshipCandidate
-from sherlock_graph.schema import HOLMES_SCHEMA
+try:
+    from sherlock_graph.models import RelationshipCandidate
+    from sherlock_graph.schema import HOLMES_SCHEMA
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.models import RelationshipCandidate
+    from sherlock_graph.schema import HOLMES_SCHEMA
 
 
 def main(

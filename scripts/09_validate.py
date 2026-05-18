@@ -12,9 +12,14 @@ import argparse
 import json
 import pathlib
 import re
+import sys
 from collections import Counter
 
-from sherlock_graph.schema import HOLMES_SCHEMA
+try:
+    from sherlock_graph.schema import HOLMES_SCHEMA
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.schema import HOLMES_SCHEMA
 
 
 def validate(candidate: dict) -> tuple[bool, str]:

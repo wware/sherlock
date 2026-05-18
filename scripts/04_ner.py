@@ -14,7 +14,11 @@ import re
 import sys
 
 import anthropic
-from sherlock_graph.schema import HOLMES_LLM_ENTITY_TYPES
+try:
+    from sherlock_graph.schema import HOLMES_LLM_ENTITY_TYPES
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.schema import HOLMES_LLM_ENTITY_TYPES
 
 try:
     from llm_json import anthropic_text, parse_llm_json

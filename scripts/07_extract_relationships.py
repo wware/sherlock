@@ -14,7 +14,11 @@ import pathlib
 import sys
 
 import anthropic
-from sherlock_graph.schema import canonicalize_predicate
+try:
+    from sherlock_graph.schema import canonicalize_predicate
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.schema import canonicalize_predicate
 
 try:
     from llm_json import anthropic_text, parse_llm_json

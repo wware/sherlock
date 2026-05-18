@@ -10,10 +10,16 @@ from __future__ import annotations
 
 import json
 import pathlib
+import sys
 from collections import Counter
 
-from sherlock_graph.identity import HolmesIdentityResolver
-from sherlock_graph.models import Mention
+try:
+    from sherlock_graph.identity import HolmesIdentityResolver
+    from sherlock_graph.models import Mention
+except ModuleNotFoundError:  # pragma: no cover - direct execution fallback
+    sys.path.append(str(pathlib.Path(__file__).resolve().parents[1]))
+    from sherlock_graph.identity import HolmesIdentityResolver
+    from sherlock_graph.models import Mention
 
 
 def main(
