@@ -14,6 +14,7 @@ Let's suppose we think of typed graphs as fundamentally a Python data structure 
 
 Of course I say that while working on the new sherlock ingestion stuff which does not inherit from kgraph and so I guess I've been unnecessarily rebuilding a bunch of that stuff, or just missing it entirely.
 
+This refers to the `graphwright/kgraph` repository.
 
 
 ## Response:
